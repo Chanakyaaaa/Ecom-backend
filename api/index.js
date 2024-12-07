@@ -65,7 +65,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
 
 //end point to register in the app
 
-app.post("/api/register", async (req, res) => {
+app.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     //check if email is already registered
@@ -89,7 +89,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 //verify email end point
-app.get("/api/verify/:token",async(req,res)=>{
+app.get("/verify/:token",async(req,res)=>{
     try{
         //find the user with the verification token
         const  user = await User.findOne({verificationToken:req.params.token});
@@ -116,7 +116,7 @@ const generateSecretKey=()=>{
 const secretKey=generateSecretKey();
 
 
-app.post("/api/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   try{
     const {email,password}=req.body;
     //check if the user exists
