@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
   verificationToken: String,
-  addresses: {
+  addresses:[
+   {
     name: String,
     mobieNo: String,
     houseNo: String,
@@ -27,7 +28,8 @@ const userSchema = new mongoose.Schema({
     city: String,
     country: String,
     postalCode: String,
-  },
+  }
+],
   orders:[
     {
         type: mongoose.Schema.Types.ObjectId,
