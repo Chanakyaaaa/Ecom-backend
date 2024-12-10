@@ -161,7 +161,8 @@ app.post("/addresses",async(req,res)=>{
 
 app.get("/addresses/:userId",async(req,res)=>{
   try{
-    const user =await findById(req.params.userId);
+    const userId=req.params.userId;
+    const user =await User.findById(userId);
     if(!user){
       return res.status(400).json({message:"User not found"});
     }
@@ -170,6 +171,7 @@ app.get("/addresses/:userId",async(req,res)=>{
 
   }
   catch(err){
+    console.log("error",err)
     res.status(500).json({message:"error fetching addresses"});
   }
 })
