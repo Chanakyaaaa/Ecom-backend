@@ -218,8 +218,10 @@ app.get("/profile/:userId", async (req, res) => {
 
 app.get("/orders/:userId", async (req, res) => {
   try {
+    console.log("in mejbj")
     const userId = req.params.userId;
-    const orders = await Order.findById({ user: userId }).populate("user");
+    const orders = await Order.find({ user: userId }).populate("user");
+    console.log(orders)
     if (!orders || orders.length == 0) {
       return res
         .status(404)
@@ -227,6 +229,6 @@ app.get("/orders/:userId", async (req, res) => {
     }
     res.status(200).json({orders})
   } catch (err) {
-    res.status(500).json({ message: "Error returning Products" });
+    res.status(500).json({ message: err.message });
   }
 });
