@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const dotenv=require("dotenv").config();
+const dotenv = require("dotenv").config();
 
 const app = express();
 const port = 8000;
@@ -14,7 +14,8 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-mongoose.connect(process.env.mongo_url, {
+mongoose
+  .connect(process.env.mongo_url, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -47,20 +48,18 @@ const sendVerificationEmail = async (email, verificationToken) => {
   //compose the email
   const mailOptions = {
     from: "amazon.com",
-    to:email,
-    subject:"email verification",
-    text:`click on the link to verify your email http://localhost:8000/verify/${verificationToken}`
-  }
+    to: email,
+    subject: "email verification",
+    text: `click on the link to verify your email https://ecom-backend-peach.vercel.app/verify/${verificationToken}`,
+  };
 
   //send the email
-  try{
+  try {
     await transporter.sendMail(mailOptions);
     console.log("verification email sent");
+  } catch (err) {
+    console.log("error sending verification email", err);
   }
-  catch(err){
-    console.log("error sending verification email",err);
-  }
-
 };
 
 //end point to register in the app
@@ -69,7 +68,7 @@ app.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     //check if email is already registered
-    const existingUser = await User.findOne({email});
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "email already registered" });
     }
@@ -79,7 +78,9 @@ app.post("/register", async (req, res) => {
     newUser.verificationToken = crypto.randomBytes(20).toString("hex");
     //save the user to the database
     await newUser.save();
-    res.status(201).json({ message: "user registered successfully,check your email and verify" });
+    res.status(201).json({
+      message: "user registered successfully,check your email and verify",
+    });
     //send the verification email to the user
     sendVerificationEmail(newUser.email, newUser.verificationToken);
   } catch (err) {
@@ -89,89 +90,143 @@ app.post("/register", async (req, res) => {
 });
 
 //verify email end point
-app.get("/verify/:token",async(req,res)=>{
-    try{
-        //find the user with the verification token
-        const  user = await User.findOne({verificationToken:req.params.token});
-        if(!user){
-            return res.status(400).json({message:"Invalid verification token"});
-        }
-        //mark the user as verified
-        user.verified=true; 
-        user.verificationToken=undefined;
-        await user.save();
-        res.status(200).json({message:"Email verified successfully"});
+app.get("/verify/:token", async (req, res) => {
+  try {
+    //find the user with the verification token
+    const user = await User.findOne({ verificationToken: req.params.token });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid verification token" });
     }
-    catch{
-        res.status(500).json({message:"Email verification failed"});
-    }
+    //mark the user as verified
+    user.verified = true;
+    user.verificationToken = undefined;
+    await user.save();
+    res.status(200).json({ message: "Email verified successfully" });
+  } catch {
+    res.status(500).json({ message: "Email verification failed" });
+  }
+});
 
-})
-
-const generateSecretKey=()=>{
-  const secretKey=crypto.randomBytes(32).toString("hex");
+const generateSecretKey = () => {
+  const secretKey = crypto.randomBytes(32).toString("hex");
   return secretKey;
-}
+};
 
-const secretKey=generateSecretKey();
-
+const secretKey = generateSecretKey();
 
 app.post("/login", async (req, res) => {
-  try{
-    const {email,password}=req.body;
+  try {
+    const { email, password } = req.body;
     //check if the user exists
-    const user=await User.findOne({email});
-    if(!user){
-      return res.status(401).json({message:"Invalid email or password"});
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
     }
     //check if the user has verified his email
-    if(user.password!=password){
-      return res.status(401).json({message:"Invalid password"});
+    if (user.password != password) {
+      return res.status(401).json({ message: "Invalid password" });
     }
     //generate a new token
-    const token=jwt.sign({userId:user._id},secretKey);
-    res.status(200).json({token,message:"login successful"});
+    const token = jwt.sign({ userId: user._id }, secretKey);
+    res.status(200).json({ token, message: "login successful" });
+  } catch (err) {
+    res.status(500).json({ message: "login failed" });
+    console.log("error logging in", err);
   }
-  catch(err){
-    res.status(500).json({message:"login failed"});
-    console.log("error logging in",err);
-  }
-})
+});
 
 //endpoint to store a new address to the backend
-app.post("/addresses",async(req,res)=>{
-  try{
-    const {userId,address}=req.body;
+app.post("/addresses", async (req, res) => {
+  try {
+    const { userId, address } = req.body;
     //find the user by userID
-    const user=await User.findById(userId);
-    if(!user){
-      return res.status(400).json({message:"Invalid user"});
+    console.log(address)
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid user" });
     }
     user.addresses.push(address);
     //save the updated user to the backend
     await user.save();
-    res.status(200).json({message:"address created successfully"});
+    res.status(200).json({ message: "address created successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "error fetching addresses" });
   }
-  catch(err){
-    res.status(500).json({message:"error fetching addresses"});
-  }
+});
 
-})
-
-
-app.get("/addresses/:userId",async(req,res)=>{
-  try{
-    const userId=req.params.userId;
-    const user =await User.findById(userId);
-    if(!user){
-      return res.status(400).json({message:"User not found"});
+app.get("/addresses/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
     }
-    const addresses=user.addresses;
-    res.status(200).json({addresses});
+    const addresses = user.addresses;
+    res.status(200).json({ addresses });
+  } catch (err) {
+    console.log("error", err);
+    res.status(500).json({ message: "error fetching addresses" });
+  }
+});
 
+//endpoint to store all the orders
+app.post("/orders", async (req, res) => {
+  try {
+    const { userId, cartItems, totalPrice, shippingAddress, paymentMethod } =
+      req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    const products = cartItems.map((item) => ({
+      name: item?.title,
+      quantity: item?.quantity,
+      price: item?.price,
+      image: item?.image,
+    }));
+
+    ///create a new order
+    const order = new Order({
+      user: userId,
+      products: products,
+      totalPrice: totalPrice,
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod,
+    });
+    await order.save();
+    res.status(200).json({ message: "order created successfully" });
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ message: "error cratinng orders" });
   }
-  catch(err){
-    console.log("error",err)
-    res.status(500).json({message:"error fetching addresses"});
+});
+
+//get the user profile
+
+app.get("/profile/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    res.status(200).json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Error returning user details" });
   }
-})
+});
+
+app.get("/orders/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const orders = await Order.findById({ user: userId }).populate("user");
+    if (!orders || orders.length == 0) {
+      return res
+        .status(404)
+        .json({ message: "orders not found for this user" });
+    }
+    res.status(200).json({orders})
+  } catch (err) {
+    res.status(500).json({ message: "Error returning Products" });
+  }
+});

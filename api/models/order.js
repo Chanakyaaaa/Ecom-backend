@@ -34,7 +34,7 @@ shippingAddress:{
         type:String,
         required:true
     },
-    mobileNo:{
+    mobieNo:{
         type:String,
         required:true
     },
