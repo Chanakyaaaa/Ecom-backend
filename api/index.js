@@ -135,6 +135,27 @@ app.post("/login", async (req, res) => {
   }
 });
 
+//endpoint to update the user password
+
+app.put("/updatePassword", async (req, res) => {
+  try{
+      const {userId, oldPassword, newPassword} = req.body;
+      const user =await User.findById(userId);
+      if(!user){
+        return res.status(400).json({message:"Invalid user"})
+      }
+      if(oldPassword!=user.password){
+        return res.status(400).json({message:"Invalid password"})
+      }
+      user.password = newPassword;
+      await user.save();
+      res.status(200).json({message:"password updated successfully"});
+  }
+  catch(err){
+    res.status(500).json({message:"error updating password"})
+  }
+})
+
 //endpoint to store a new address to the backend
 app.post("/addresses", async (req, res) => {
   try {
