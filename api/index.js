@@ -139,16 +139,13 @@ app.post("/login", async (req, res) => {
 
 app.put("/updatePassword", async (req, res) => {
   try{
-      const {email, oldPassword, newPassword} = req.body;
+      const {email, newPassword} = req.body;
       console.log("in user")
       //find the user by email
       const user = await User.findOne({email});
       console.log(user)
       if(!user){
         return res.status(400).json({message:"Invalid user"})
-      }
-      if(oldPassword!=user.password){
-        return res.status(400).json({message:"Invalid password"})
       }
       user.password = newPassword;
       await user.save();
